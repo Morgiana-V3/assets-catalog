@@ -1,6 +1,6 @@
-# assets-manager
+# assets-catalog
 
-静态资源管理工具，支持 **CLI 生成** 和 **运行时** 两种方式。
+静态资源目录生成工具，支持 **CLI 生成** 和 **运行时** 两种方式。
 
 ## ✨ 特性
 
@@ -13,11 +13,11 @@
 ## 📥 安装
 
 ```bash
-npm install assets-manager
+npm install assets-catalog
 # 或
-pnpm add assets-manager
+pnpm add assets-catalog
 # 或
-yarn add assets-manager
+yarn add assets-catalog
 ```
 
 ## 🚀 快速开始
@@ -79,7 +79,7 @@ console.log(assetMeta.logo.mime) // 'image/png'
 
 ```typescript
 // src/lib/assets.ts
-import { createAssets } from 'assets-manager'
+import { createAssets } from 'assets-catalog'
 
 // 1. 使用字面量字符串调用 import.meta.glob
 const globResult = import.meta.glob('/src/assets/**/*', { 

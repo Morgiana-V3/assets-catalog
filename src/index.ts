@@ -1,6 +1,6 @@
 /**
- * assets-manager
- * 静态资源管理工具，支持 CLI 生成和 Vite 运行时两种方式
+ * assets-catalog
+ * 静态资源目录生成工具，支持 CLI 生成和 Vite 运行时两种方式
  */
 
 // 导出运行时函数（Vite 环境使用）

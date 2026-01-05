@@ -81,7 +81,7 @@ function setDeepValue(obj: any, segments: string[], value: any) {
  * @example
  * ```ts
  * // 在 Vite 项目中使用
- * import { createAssets } from 'assets-manager'
+ * import { createAssets } from 'assets-catalog'
  * 
  * // 必须使用字面量字符串调用 import.meta.glob
  * const globResult = import.meta.glob('/src/assets/**\/*', { eager: true, as: 'url' })

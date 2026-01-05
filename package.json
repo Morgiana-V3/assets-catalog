@@ -1,7 +1,7 @@
 {
-  "name": "assets-manager",
+  "name": "assets-catalog",
   "version": "1.0.0",
-  "description": "静态资源管理工具，支持 CLI 生成和 Vite 运行时两种方式",
+  "description": "静态资源清单生成工具，支持 CLI 生成和 Vite 运行时两种方式",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
