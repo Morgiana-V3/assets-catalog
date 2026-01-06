@@ -2,6 +2,11 @@
 
 > 类型安全的静态资源管理工具 · 自动生成资源清单 · 支持 CLI 和 Vite 运行时
 
+[![GitHub](https://img.shields.io/badge/GitHub-Morgiana--V3%2Fassets--catalog-blue?logo=github)](https://github.com/Morgiana-V3/assets-catalog)
+[![npm](https://img.shields.io/npm/v/assets-catalog)](https://www.npmjs.com/package/assets-catalog)
+
+[English Documentation](./README.md) | [GitHub 仓库](https://github.com/Morgiana-V3/assets-catalog)
+
 ## 特性
 
 - **类型安全**：自动生成 TypeScript 类型定义，完整的编辑器智能提示

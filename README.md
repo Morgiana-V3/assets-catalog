@@ -1,7 +1,10 @@
 # assets-catalog
 > Type-safe static asset manager · Auto-generate asset manifests · Support CLI and Vite runtime
 
-[中文文档](./README_ZH.md)
+[![GitHub](https://img.shields.io/badge/GitHub-Morgiana--V3%2Fassets--catalog-blue?logo=github)](https://github.com/Morgiana-V3/assets-catalog)
+[![npm](https://img.shields.io/npm/v/assets-catalog)](https://www.npmjs.com/package/assets-catalog)
+
+[中文文档](./README_ZH.md) | [GitHub Repository](https://github.com/Morgiana-V3/assets-catalog)
 
 ## Features
 
