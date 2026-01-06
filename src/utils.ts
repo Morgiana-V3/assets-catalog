@@ -183,11 +183,12 @@ export function buildMeta(pathWithRoot: string): AssetMeta {
 /**
  * 解析 CLI 参数
  */
-export function parseArgs(argv: string[]): { inputDir: string; outFile: string } {
+export function parseArgs(argv: string[]): { inputDir: string; outFile: string; watch: boolean } {
   const args = argv.slice(2)
 
   let inputDir = 'src/assets'
   let outFile = 'src/lib/assets.ts'
+  let watch = false
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
@@ -199,9 +200,11 @@ export function parseArgs(argv: string[]): { inputDir: string; outFile: string }
     } else if (arg === '--out' && next) {
       outFile = next
       i++
+    } else if (arg === '--watch' || arg === '-w') {
+      watch = true
     }
   }
 
-  return { inputDir, outFile }
+  return { inputDir, outFile, watch }
 }
 

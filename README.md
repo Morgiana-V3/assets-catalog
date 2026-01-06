@@ -1,13 +1,14 @@
 # assets-catalog
 
-静态资源目录生成工具，支持 **CLI 生成** 和 **运行时** 两种方式。
+静态资源目录生成工具，支持 **CLI 生成**、**CLI 监听** 和 **运行时** 三种方式。
 
 ## ✨ 特性
 
 - 🚀 **CLI 方式**：适用于任何项目，手动生成资源清单
+- 👀 **CLI 监听模式**：自动监听文件变化，实时重新生成（新增）
 - ⚡ **运行时方式**：在 Vite 项目中使用，开发时自动响应文件变化
 - 📦 **零依赖 Vite**：运行时方式使用项目自己的 Vite 环境
-- 🔒 **完整类型支持**：自动生成 TypeScript 类型定义
+- 🔒 **完整类型支持**：CLI 方式自动生成精确的 TypeScript 类型定义
 - 📊 **元信息支持**：包含文件类型、MIME、扩展名等信息
 
 ## 📥 安装
@@ -22,7 +23,7 @@ yarn add assets-catalog
 
 ## 🚀 快速开始
 
-### 方式一：CLI 命令（推荐用于生产环境）
+### 方式一：CLI 命令（推荐）
 
 适用于任何项目，生成静态资源清单文件。
 
@@ -32,6 +33,28 @@ npx gen-assets
 
 # 自定义输入输出
 npx gen-assets --input src/assets --out src/lib/assets.ts
+
+# 🆕 监听模式：自动响应文件变化
+npx gen-assets --watch
+# 或简写
+npx gen-assets -w
+
+# 监听模式 + 自定义路径
+npx gen-assets --input src/assets --out src/lib/assets.ts --watch
+```
+
+**监听模式输出示例：**
+```
+👀 监听模式已启动
+📁 监听目录: /path/to/src/assets
+📝 输出文件: /path/to/src/lib/assets.ts
+💡 提示: 按 Ctrl+C 停止监听
+
+🔍 扫描目录: /path/to/src/assets
+✓ 生成清单: /path/to/src/lib/assets.ts
+
+[2026/1/6 16:30:25] 🔄 检测到文件变化，重新生成...
+[2026/1/6 16:30:25] ✓ 清单已更新
 ```
 
 生成的文件：
@@ -68,7 +91,7 @@ console.log(assetMeta.logo.type) // 'image'
 console.log(assetMeta.logo.mime) // 'image/png'
 ```
 
-### 方式二：运行时方式（推荐用于开发环境）
+### 方式二：运行时方式（仅 Vite 项目）
 
 仅适用于 Vite 项目，开发时自动响应文件变化。
 
@@ -187,9 +210,16 @@ import { assets, assetMeta } from './lib/assets'
 {
   "scripts": {
     "gen-assets": "gen-assets --input src/assets --out src/lib/assets.ts",
+    "gen-assets:watch": "gen-assets --input src/assets --out src/lib/assets.ts --watch",
+    "dev": "npm run gen-assets:watch & vite",
     "prebuild": "npm run gen-assets"
   }
 }
+```
+
+开发时使用监听模式：
+```bash
+npm run gen-assets:watch
 ```
 
 这样在每次构建前会自动生成资源清单。
@@ -246,6 +276,7 @@ gen-assets [options]
 
 - `--input <dir>` - 输入目录（默认：`src/assets`）
 - `--out <file>` - 输出文件（默认：`src/lib/assets.ts`）
+- `--watch, -w` - 监听模式，自动响应文件变化
 
 ### createAssets(globResult, baseDir?)
 
@@ -278,23 +309,24 @@ interface AssetMeta {
 
 ## 🔄 使用场景对比
 
-| 特性 | CLI 方式 | 运行时方式 |
-|------|---------|------------|
-| 适用环境 | 任何项目 | 仅 Vite 项目 |
-| 文件变化响应 | 需手动重新生成 | 自动响应 |
-| 构建工具依赖 | 无 | Vite（使用项目已有） |
-| 设置复杂度 | 一行命令 | 3行代码 |
-| 性能 | 静态文件，快 | 依赖 Vite HMR |
-| 类型安全 | ✅ 完整类型推断 | ⚠️ 需要类型断言 |
-| 推荐场景 | 生产构建、需要类型安全 | Vite 开发环境、快速迭代 |
+| 特性 | CLI 方式 | CLI 监听模式 | 运行时方式 |
+|------|---------|-------------|------------|
+| 适用环境 | 任何项目 | 任何项目 | 仅 Vite 项目 |
+| 文件变化响应 | 需手动重新生成 | ✅ 自动响应 | ✅ 自动响应 |
+| 构建工具依赖 | 无 | 无 | Vite |
+| 设置复杂度 | 一行命令 | 一行命令 + --watch | 3行代码 |
+| 性能 | 静态文件，快 | 静态文件，快 | 依赖 Vite HMR |
+| 类型安全 | ✅ 完整类型推断 | ✅ 完整类型推断 | ⚠️ 需要类型断言 |
+| 推荐场景 | 生产构建 | 开发环境（非Vite） | Vite 开发环境 |
 
 ## ⚠️ 注意事项
 
 1. **路径格式**：所有路径使用正斜杠 `/`，兼容 Windows 和 Unix
 2. **文件名冲突**：同一目录下不要有相同文件名但不同扩展名的文件
-3. **字面量限制**：`import.meta.glob` 必须使用字符串字面量，不能用变量
+3. **字面量限制**：运行时方式的 `import.meta.glob` 必须使用字符串字面量，不能用变量
 4. **带点文件名**：`icon.avatar.png` 会被处理为 key `'icon.avatar'`（需要用方括号访问）
-5. **类型推断限制**：运行时方式的类型推断不够精确，建议导出时使用 `as any`，或在生产环境使用 CLI 方式获得完整类型安全
+5. **类型推断限制**：运行时方式的类型推断不够精确，建议导出时使用 `as any`，或使用 CLI 方式获得完整类型安全
+6. **监听模式**：按 `Ctrl+C` 停止监听服务
 
 ## ❓ 常见问题
 
@@ -308,7 +340,7 @@ assets['icon.avatar']  // ✓ 正确
 
 ### Q: CLI 和运行时可以混用吗？
 
-可以！开发时用运行时方式（自动更新），生产构建前用 CLI 生成静态文件（性能更好）。
+可以！开发时用 CLI 监听模式或运行时方式（自动更新），生产构建前用 CLI 生成静态文件（类型安全）。
 
 ### Q: 为什么 import.meta.glob 不能用变量？
 
@@ -316,7 +348,14 @@ assets['icon.avatar']  // ✓ 正确
 
 ### Q: 如何在非 Vite 项目使用？
 
-请使用 CLI 方式：`npx gen-assets`
+请使用 CLI 方式：
+```bash
+# 一次性生成
+npx gen-assets
+
+# 或使用监听模式（开发时）
+npx gen-assets --watch
+```
 
 ### Q: 运行时方式报类型错误怎么办？
 
