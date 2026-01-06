@@ -1,10 +1,10 @@
 /**
- * 资源类型
+ * Asset type
  */
 export type AssetType = 'image' | 'audio' | 'video' | 'font' | 'application' | 'text' | 'other'
 
 /**
- * 资源元信息
+ * Asset metadata
  */
 export interface AssetMeta {
   type: AssetType
@@ -14,7 +14,7 @@ export interface AssetMeta {
 }
 
 /**
- * CLI 选项
+ * CLI options
  */
 export interface CliOptions {
   inputDir: string
@@ -22,7 +22,7 @@ export interface CliOptions {
 }
 
 /**
- * 资源树（嵌套对象，叶子是字符串或 AssetMeta）
+ * Asset tree (nested object, leaves are strings or AssetMeta)
  */
 export type AssetTree = {
   [key: string]: AssetTree | string | AssetMeta

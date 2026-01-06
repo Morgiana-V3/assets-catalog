@@ -1,29 +1,28 @@
 # assets-catalog
-> Type-safe static asset manager · Auto-generate asset manifests · Support CLI and Vite runtime
 
-[中文文档](./README_ZH.md)
+> 类型安全的静态资源管理工具 · 自动生成资源清单 · 支持 CLI 和 Vite 运行时
 
-## Features
+## 特性
 
-- **Type Safe**: Auto-generate TypeScript type definitions with full editor IntelliSense
-- **Multiple Approaches**: Support CLI static file generation or Vite runtime dynamic loading
-- **Asset Metadata**: Auto-detect MIME types, extensions, and asset types
+- **类型安全**：自动生成 TypeScript 类型定义，完整的编辑器智能提示
+- **多种方式**：支持 CLI 生成静态文件或 Vite 运行时动态加载
+- **资源元信息**：自动识别 MIME 类型、扩展名、资源类型
 
-## Quick Start
+## 快速开始
 
 ```bash
-# 1. Install
+# 1. 安装
 npm install assets-catalog
 
-# 2. Generate asset manifest
+# 2. 生成资源清单
 npx gen-assets
 
-# 3. Use in your code
+# 3. 在代码中使用
 import { assets } from './lib/assets'
-const logo = assets.images.logo  // Full type hints
+const logo = assets.images.logo  // 完整类型提示
 ```
 
-## Installation
+## 安装
 
 ```bash
 npm install assets-catalog
@@ -31,18 +30,19 @@ yarn add assets-catalog
 pnpm add assets-catalog
 ```
 
-**Dependencies:**
-- [mime-types](https://www.npmjs.com/package/mime-types): MIME type detection
+**依赖：**
+- [mime-types](https://www.npmjs.com/package/mime-types)： MIME 类型识别
+
 
 ---
 
-## Data Structure
+## 数据结构
 
-> ⚠️ **Important**: To avoid file overwrites, don't use the same filename with different extensions in the same directory (e.g. `logo.png` and `logo.jpg`)
+> ⚠️ **重要**：为避免同名文件覆盖，同一目录下不要出现相同名称但不同扩展名的文件（如 `logo.png` 和 `logo.jpg`）
 
-The tool traverses all files in the specified directory and generates two JSON structures: `assets` (paths) and `assetMeta` (metadata).
+工具会遍历指定目录下的所有文件，生成两个 JSON 数据：`assets`（路径）和 `assetMeta`（元信息）。
 
-**Directory structure example:**
+**目录结构示例：**
 
 ```
 src/assets/
@@ -55,10 +55,10 @@ src/assets/
       └── custom.woff2
 ```
 
-**Generated data structure:**
+**生成的数据结构：**
 
 ```typescript
-// assetMeta - Complete metadata
+// assetMeta - 完整的元信息
 const assetMeta = {
   images: {
     logo: {
@@ -92,7 +92,7 @@ const assetMeta = {
   }
 }
 
-// assets - Concise path tree
+// assets - 简洁的路径树
 const assets = {
   images: {
     logo: 'src/assets/images/logo.png',
@@ -109,40 +109,40 @@ const assets = {
 
 ---
 
-## Usage
+## 使用方式
 
-Two approaches available, choose based on your project needs:
+提供两种使用方式，根据项目需求选择：
 
-### Approach 1: CLI (Recommended)
+### 方式一：CLI 命令行（推荐）
 
-Generate static asset manifest files using terminal commands.
+在终端使用命令生成静态资源清单文件。
 
-**✅ Advantages:**
-- Complete TypeScript type hints, editor-friendly IntelliSense
-- Works with any project (Vue, React, Svelte, etc.)
+**✅ 优点：**
+- 完整的 TypeScript 类型提示，编辑器智能提示友好
+- 适用于任何项目（Vue、React、Svelte 等）
 
-**⚠️ Disadvantages:**
-- Generates additional code files
-- Requires re-running command when assets change (can be solved with watch mode)
+**⚠️ 缺点：**
+- 需要生成额外的代码文件
+- 资源更新需要重新执行命令（可使用监听模式解决）
 
-**Basic usage:**
+**基本用法：**
 
 ```bash
-# Use default config (input: src/assets, output: src/lib/assets.ts)
+# 使用默认配置（输入：src/assets，输出：src/lib/assets.ts）
 npx gen-assets
 
-# Custom input/output paths
+# 自定义输入输出路径
 npx gen-assets --input src/assets --out src/lib/assets.ts
 
-# Watch mode (auto-regenerate on file changes)
+# 监听模式（文件变化自动重新生成）
 npx gen-assets --watch
 npx gen-assets -w
 
-# Combined usage
+# 组合使用
 npx gen-assets --input public/images --out src/catalog.ts --watch
 ```
 
-**Generated file:**
+**生成的文件：**
 
 ```typescript
 // src/lib/assets.ts
@@ -163,15 +163,15 @@ export type AssetMeta = typeof assetMeta
 export type Assets = typeof assets
 ```
 
-**Use in code:**
+**在代码中使用：**
 
 ```typescript
 import { assets, assetMeta } from './lib/assets'
 
-// Use asset path (full type hints)
+// 使用资源路径（完整类型提示）
 const logoPath = assets.logo // 'src/assets/logo.png'
 
-// Get asset metadata
+// 获取资源元信息
 const logoMeta = assetMeta.logo
 console.log(logoMeta.type)  // 'image'
 console.log(logoMeta.mime)  // 'image/png'
@@ -179,61 +179,61 @@ console.log(logoMeta.mime)  // 'image/png'
 
 ---
 
-### Approach 2: Vite Runtime
+### 方式二：Vite 运行时
 
-Dynamically generate asset objects in Vite projects.
+在 Vite 项目中动态生成资源对象。
 
-**✅ Advantages:**
-- No additional code files needed
-- Assets auto-sync, no regeneration needed
+**✅ 优点：**
+- 无需生成额外的代码文件
+- 资源自动同步，无需重新生成
 
-**⚠️ Disadvantages:**
-- Only works with Vite projects
-- Weaker type hints (`Record<string, any>`), less precise editor IntelliSense
+**⚠️ 缺点：**
+- 仅支持 Vite 项目
+- 类型提示较弱（`Record<string, any>`），编辑器无法精确提示
 
-**Usage example:**
+**使用示例：**
 
 ```typescript
 import { createAssets } from 'assets-catalog'
 
-// Import assets using import.meta.glob
+// 使用 import.meta.glob 导入资源
 const globResult = import.meta.glob('/src/assets/**/*', { 
   eager: true, 
   as: 'url' 
 })
 
-// Create asset object
+// 创建资源对象
 const { assets, assetMeta } = createAssets(globResult, '/src/assets')
 
-// Use assets
-console.log(assets.logo)      // URL path
+// 使用资源
+console.log(assets.logo)      // URL 路径
 console.log(assetMeta.logo)   // { type, ext, mime, path }
 ```
 
-**About `baseDir` parameter:**
+**关于 `baseDir` 参数：**
 
-`baseDir` is used to trim path prefixes for a cleaner object structure.
+`baseDir` 用于裁剪路径前缀，让生成的对象结构更简洁。
 
 ```typescript
-// File: /src/assets/images/logo.png
+// 文件：/src/assets/images/logo.png
 
-// ❌ Without baseDir (or empty string)
+// ❌ 不传 baseDir（或传空字符串）
 createAssets(globResult, '')
-// Generates: assets.src.assets.images.logo  // verbose
+// 生成：assets.src.assets.images.logo  // 冗长
 
-// ✅ With '/src/assets' (recommended)
+// ✅ 传 '/src/assets'（推荐）
 createAssets(globResult, '/src/assets')
-// Generates: assets.images.logo  // concise
+// 生成：assets.images.logo  // 简洁
 ```
 
 ---
 
-### Flexible Usage: Multiple Asset Catalogs
+### 灵活使用：多个资源清单
 
-You can generate multiple fine-grained asset catalogs as needed.
+你可以根据需要生成多个颗粒度更细的资源清单。
 
 ```typescript
-// Manage images and fonts separately
+// 分别管理图片和字体
 const { assets: imageAssets, assetMeta: imageAssetMeta } = createAssets(
   import.meta.glob('/src/assets/images/**/*', { eager: true, as: 'url' }),
   '/src/assets/images'
@@ -244,12 +244,12 @@ const { assets: fontAssets, assetMeta: fontAssetMeta } = createAssets(
   '/src/assets/fonts'
 )
 
-// Use
+// 使用
 const logo = imageAssets.logo
 const font = fontAssets.custom
 ```
 
-Or use CLI to generate multiple files:
+或者使用 CLI 生成多个文件：
 
 ```bash
 npx gen-assets --input src/assets/images --out src/lib/images.ts
@@ -258,122 +258,122 @@ npx gen-assets --input src/assets/fonts --out src/lib/fonts.ts
 
 ---
 
-## API Documentation
+## API 文档
 
-### CLI Command
+### CLI 命令
 
 #### `gen-assets [options]`
 
-Generate static asset manifest file.
+生成静态资源清单文件。
 
-**Options:**
+**选项：**
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--input` | `string` | `src/assets` | Input directory path |
-| `--out` | `string` | `src/lib/assets.ts` | Output file path |
-| `--watch`, `-w` | `boolean` | `false` | Watch mode, auto-regenerate on file changes |
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--input` | `string` | `src/assets` | 输入目录路径 |
+| `--out` | `string` | `src/lib/assets.ts` | 输出文件路径 |
+| `--watch`, `-w` | `boolean` | `false` | 监听模式，文件变化自动重新生成 |
 
-**Examples:**
+**示例：**
 
 ```bash
-# Default config
+# 默认配置
 npx gen-assets
 
-# Custom paths
+# 自定义路径
 npx gen-assets --input public/images --out src/catalog.ts
 
-# Watch mode (recommended for development)
+# 监听模式（推荐开发时使用）
 npx gen-assets --watch
 
-# Full config
+# 完整配置
 npx gen-assets --input src/assets --out src/lib/assets.ts --watch
 ```
 
 ---
 
-### Vite Runtime API
+### Vite 运行时 API
 
 #### `createAssets(globResult, baseDir?)`
 
-Create asset object (Vite environment only).
+创建资源对象（仅 Vite 环境）。
 
-**Parameters:**
+**参数：**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `globResult` | `Record<string, any>` | Yes | Result from `import.meta.glob` |
-| `baseDir` | `string` | No | Base directory for trimming path prefixes |
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `globResult` | `Record<string, any>` | 是 | `import.meta.glob` 的返回结果 |
+| `baseDir` | `string` | 否 | 基础目录，用于裁剪路径前缀 |
 
-**Return value:**
+**返回值：**
 
 ```typescript
 {
-  assets: Record<string, any>,      // Asset path tree
-  assetMeta: Record<string, any>    // Asset metadata tree
+  assets: Record<string, any>,      // 资源路径树
+  assetMeta: Record<string, any>    // 资源元信息树
 }
 ```
 
-**Complete example:**
+**完整示例：**
 
 ```typescript
 import { createAssets } from 'assets-catalog'
 
 const { assets, assetMeta } = createAssets(
   import.meta.glob('/src/assets/**/*', { eager: true, as: 'url' }),
-  '/src/assets'  // Optional, recommended for cleaner paths
+  '/src/assets'  // 可选，推荐传入以简化路径
 )
 
-// Use
+// 使用
 const logo = assets.images.logo
 const logoInfo = assetMeta.images.logo
 ```
 
 ---
 
-## Type Definitions
+## 类型定义
 
 ### AssetMeta
 
-Asset metadata object.
+资源元信息对象。
 
 ```typescript
 interface AssetMeta {
-  type: AssetType    // Asset type
-  ext: string        // Extension (e.g. '.png')
-  mime: string       // MIME type (e.g. 'image/png')
-  path: string       // Asset path
+  type: AssetType    // 资源类型
+  ext: string        // 扩展名（如 '.png'）
+  mime: string       // MIME 类型（如 'image/png'）
+  path: string       // 资源路径
 }
 
 type AssetType = 
-  | 'image'        // Image
-  | 'audio'        // Audio
-  | 'video'        // Video
-  | 'font'         // Font
-  | 'application'  // Application
-  | 'text'         // Text
-  | 'other'        // Other
+  | 'image'        // 图片
+  | 'audio'        // 音频
+  | 'video'        // 视频
+  | 'font'         // 字体
+  | 'application'  // 应用程序
+  | 'text'         // 文本
+  | 'other'        // 其他
 ```
 
-### Supported Asset Types
+### 支持的资源类型
 
-| Type | Extensions |
-|------|------------|
-| **Image** | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.ico`, `.bmp` |
-| **Audio** | `.mp3`, `.wav`, `.ogg`, `.m4a`, `.flac` |
-| **Video** | `.mp4`, `.webm`, `.ogv`, `.mov`, `.avi` |
-| **Font** | `.woff`, `.woff2`, `.ttf`, `.otf`, `.eot` |
-| **Text** | `.json`, `.xml`, `.txt` |
-| **Other** | All other file types |
+| 类型 | 扩展名 |
+|------|--------|
+| **图片** | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.ico`, `.bmp` |
+| **音频** | `.mp3`, `.wav`, `.ogg`, `.m4a`, `.flac` |
+| **视频** | `.mp4`, `.webm`, `.ogv`, `.mov`, `.avi` |
+| **字体** | `.woff`, `.woff2`, `.ttf`, `.otf`, `.eot` |
+| **文本** | `.json`, `.xml`, `.txt` |
+| **其他** | 所有其他文件类型 |
 
 ---
 
-## Use Cases
+## 使用场景
 
-### 1. Avoid Multiple Imports
+### 1. 避免多次 import 资源
 
 ```typescript
-// ❌ Before: Individual imports for each asset
+// ❌ 之前：每个资源都要单独 import
 import Logo from '@/assets/images/logo.png'
 import Bg from '@/assets/images/bg.jpg'
 import Bgm from '@/assets/audio/bgm.mp3'
@@ -388,7 +388,7 @@ function Gallery() {
   )
 }
 
-// ✅ Now: Centralized management, single import
+// ✅ 现在：统一管理，一次导入
 import { assets } from './lib/assets'
 
 function Gallery() {
@@ -404,11 +404,11 @@ function Gallery() {
 
 ---
 
-### 2. Dynamic Asset Switching
+### 2. 控制资源切换
 
-Dynamically get assets based on current language.
+如根据当前语言动态获取对应的资源。
 
-**Directory structure:**
+**目录结构：**
 
 ```
 src/assets/
@@ -424,7 +424,7 @@ src/assets/
           └── logo.png
 ```
 
-**Usage example:**
+**使用示例：**
 
 ```typescript
 import { assets } from './lib/assets'
@@ -433,7 +433,7 @@ import { useI18n } from 'vue-i18n'
 function MyComponent() {
   const { locale } = useI18n()
   
-  // Dynamically get assets based on language
+  // 根据语言动态获取资源
   return <img src={assets.i18n[locale.value].banner} />
   
   // locale='zh': assets.i18n.zh.banner
@@ -444,14 +444,14 @@ function MyComponent() {
 
 ---
 
-### 3. Batch Asset Processing
+### 3. 批量资源处理
 
-Use `assetMeta` for asset filtering and grouping.
+使用 `assetMeta` 进行资源过滤和分组处理。
 
 ```typescript
 import { assetMeta } from './lib/assets'
 
-// Get all image assets
+// 获取所有图片资源
 function getAllImages() {
   const images: string[] = []
   
@@ -471,7 +471,7 @@ function getAllImages() {
   return images
 }
 
-// Group by MIME type
+// 根据 MIME 类型分组
 function groupByMimeType() {
   const groups: Record<string, string[]> = {}
   
@@ -493,20 +493,20 @@ function groupByMimeType() {
   return groups
 }
 
-// Use
+// 使用
 const allImages = getAllImages()
 const jpegImages = groupByMimeType()['image/jpeg']
-console.log(`Found ${allImages.length} images`)
-console.log(`Including ${jpegImages.length} JPEG images`)
+console.log(`找到 ${allImages.length} 张图片`)
+console.log(`其中 ${jpegImages.length} 张 JPEG 格式`)
 ```
 
 ---
 
-### 4. Asset Preloading Management
+### 4. 管理资源预加载
 
-Organize assets by level for smart preloading.
+如按关卡组织资源，实现智能预加载。
 
-**Directory structure:**
+**目录结构：**
 
 ```
 src/assets/
@@ -524,7 +524,7 @@ src/assets/
           └── icon.png
 ```
 
-**Preloading implementation:**
+**预加载实现：**
 
 ```typescript
 import { assets, assetMeta } from './lib/assets'
@@ -551,7 +551,7 @@ async function enterLevel(level: Exclude<LevelKey, 'common'>) {
   await preloadLevelImages('common')
   await preloadLevelImages(level)
 
-  // Use assets to render scene
+  // 使用资源渲染场景
   const bg = assets.game[level].bg
   const hero = assets.game[level].hero
 
@@ -564,10 +564,3 @@ enterLevel('level1')
 
 ---
 
-## License
-
-MIT
-
-## Author
-
-Created with ❤️ for better asset management

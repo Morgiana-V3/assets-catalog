@@ -4,7 +4,7 @@ import path from 'node:path'
 import { setDeep, toTsLiteral, mapMetaToPaths, buildMeta, parseArgs } from './utils.js'
 
 /**
- * 生成资源清单文件
+ * Generate asset manifest file
  */
 export async function generateAssetsTs(options?: { inputDir?: string; outFile?: string; silent?: boolean }) {
   const parsedArgs = parseArgs(process.argv)
@@ -17,7 +17,7 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
   const rootDir = path.resolve(projectRoot, inputDir)
   const outPath = path.resolve(projectRoot, outFile)
 
-  // 这里存的是 assetMeta 的树（叶子是 meta 对象）
+  // Stores the assetMeta tree (leaves are meta objects)
   const metaTree: Record<string, any> = {}
 
   async function walk(dir: string) {
@@ -31,7 +31,7 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
         continue
       }
 
-      // 文件
+      // File
       const relFromRoot = path
         .relative(rootDir, full)
         .replace(/\\/g, '/')
@@ -42,7 +42,7 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
 
       const pathWithRoot = `${normalizedPrefix}/${relFromRoot}`
 
-      // 构造 segments
+      // Construct segments
       const pathParts = pathWithRoot.split('/')
       const fileWithExt = pathParts.pop()!
 
@@ -62,17 +62,17 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
   }
 
   if (!silent) {
-    console.log('🔍 扫描目录:', rootDir)
+    console.log('🔍 Scanning directory:', rootDir)
   }
   
   await walk(rootDir)
 
-  // 从 metaTree 映射出只含 path 的 assets 树
+  // Map metaTree to assets tree containing only paths
   const assetsTree = mapMetaToPaths(metaTree)
 
   const header =
-    `// 生成的资源清单 —— 不要手动更改 资源更新需重新生成一份\n` +
-    `// 生成时间: ${new Date().toLocaleString('zh-CN')}\n\n`
+    `// Generated asset manifest - Do not modify manually. Regenerate when assets change.\n` +
+    `// Generated at: ${new Date().toLocaleString('en-US')}\n\n`
 
   const assetMetaCode =
     'export const assetMeta = ' + toTsLiteral(metaTree, 0) + ' as const\n\n'
@@ -90,27 +90,27 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
   await fs.writeFile(outPath, content, 'utf8')
 
   if (!silent) {
-    console.log('✓ 生成清单:', outPath)
+    console.log('✓ Generated manifest:', outPath)
   }
 }
 
 /**
- * 监听模式：监听文件变化并自动重新生成
+ * Watch mode: Monitor file changes and auto-regenerate
  */
 export async function watchAndGenerate() {
   const { inputDir, outFile } = parseArgs(process.argv)
   const projectRoot = process.cwd()
   const rootDir = path.resolve(projectRoot, inputDir)
 
-  console.log('👀 监听模式已启动')
-  console.log('📁 监听目录:', rootDir)
-  console.log('📝 输出文件:', path.resolve(projectRoot, outFile))
-  console.log('💡 提示: 按 Ctrl+C 停止监听\n')
+  console.log('👀 Watch mode started')
+  console.log('📁 Watching directory:', rootDir)
+  console.log('📝 Output file:', path.resolve(projectRoot, outFile))
+  console.log('💡 Tip: Press Ctrl+C to stop watching\n')
 
-  // 初始生成
+  // Initial generation
   await generateAssetsTs({ inputDir, outFile })
 
-  // 防抖：避免短时间内多次触发
+  // Debounce: Avoid multiple triggers in a short time
   let timer: NodeJS.Timeout | null = null
   const debounceDelay = 300
 
@@ -121,20 +121,20 @@ export async function watchAndGenerate() {
     
     timer = setTimeout(async () => {
       try {
-        const now = new Date().toLocaleString('zh-CN')
-        console.log(`\n[${now}] 🔄 检测到文件变化，重新生成...`)
+        const now = new Date().toLocaleString('en-US')
+        console.log(`\n[${now}] 🔄 File change detected, regenerating...`)
         await generateAssetsTs({ inputDir, outFile, silent: true })
-        console.log(`[${now}] ✓ 清单已更新`)
+        console.log(`[${now}] ✓ Manifest updated`)
       } catch (err) {
-        console.error('✗ 生成失败:', err)
+        console.error('✗ Generation failed:', err)
       }
     }, debounceDelay)
   }
 
-  // 使用 fs.watch 监听目录
+  // Watch directory using fs.watch
   const watcher = fsSync.watch(rootDir, { recursive: true }, (eventType, filename) => {
     if (filename) {
-      // 过滤掉临时文件和隐藏文件
+      // Filter out temporary and hidden files
       if (filename.startsWith('.') || filename.includes('~')) {
         return
       }
@@ -142,29 +142,29 @@ export async function watchAndGenerate() {
     }
   })
 
-  // 优雅退出
+  // Graceful exit
   process.on('SIGINT', () => {
-    console.log('\n\n👋 停止监听')
+    console.log('\n\n Stopped watching')
     watcher.close()
     process.exit(0)
   })
 }
 
-// CLI 入口逻辑
+// CLI entry logic
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('cli.js')) {
   const { watch } = parseArgs(process.argv)
   
   if (watch) {
-    // 监听模式
+    // Watch mode
     watchAndGenerate().catch((err) => {
-      console.error('✗ 监听失败:')
+      console.error('✗ Watch failed:')
       console.error(err)
       process.exit(1)
     })
   } else {
-    // 普通生成模式
+    // Normal generation mode
     generateAssetsTs().catch((err) => {
-      console.error('✗ 生成失败:')
+      console.error('✗ Generation failed:')
       console.error(err)
       process.exit(1)
     })

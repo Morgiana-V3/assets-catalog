@@ -3,10 +3,10 @@ import mime from 'mime-types'
 import type { AssetMeta, AssetType, AssetTree } from './types.js'
 
 /**
- * 常用 MIME 类型映射表（用于浏览器环境，避免引入完整的 mime-db）
+ * Common MIME type mappings (for browser environment, avoiding full mime-db)
  */
 export const COMMON_MIME_TYPES: Record<string, string> = {
-  // 图片
+  // Images
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.png': 'image/png',
@@ -15,25 +15,25 @@ export const COMMON_MIME_TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.bmp': 'image/bmp',
-  // 音频
+  // Audio
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
   '.ogg': 'audio/ogg',
   '.m4a': 'audio/mp4',
   '.flac': 'audio/flac',
-  // 视频
+  // Video
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.ogv': 'video/ogg',
   '.mov': 'video/quicktime',
   '.avi': 'video/x-msvideo',
-  // 字体
+  // Fonts
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
   '.otf': 'font/otf',
   '.eot': 'application/vnd.ms-fontobject',
-  // 文本
+  // Text
   '.json': 'application/json',
   '.txt': 'text/plain',
   '.xml': 'application/xml',
@@ -44,14 +44,14 @@ export const COMMON_MIME_TYPES: Record<string, string> = {
 }
 
 /**
- * 根据扩展名获取 MIME 类型（浏览器友好版本）
+ * Get MIME type by extension (browser-friendly version)
  */
 export function getMimeType(ext: string): string {
   return COMMON_MIME_TYPES[ext.toLowerCase()] || 'application/octet-stream'
 }
 
 /**
- * 根据扩展名猜测资源类型
+ * Guess asset type by extension
  */
 export function guessAssetType(ext: string): AssetType {
   ext = ext.toLowerCase()
@@ -71,7 +71,7 @@ export function guessAssetType(ext: string): AssetType {
 }
 
 /**
- * 在嵌套对象中设置深层属性
+ * Set deep property in nested object
  */
 export function setDeep(obj: any, segments: string[], value: any) {
   let cur = obj
@@ -92,7 +92,7 @@ export function setDeep(obj: any, segments: string[], value: any) {
 }
 
 /**
- * 把 JS 值转成 TypeScript 源码字符串
+ * Convert JS value to TypeScript source code string
  */
 export function toTsLiteral(value: any, indent = 0): string {
   const pad = (n: number) => '  '.repeat(n)
@@ -139,12 +139,12 @@ export function toTsLiteral(value: any, indent = 0): string {
 }
 
 /**
- * 从 assetMeta 的树结构中，把所有叶子 { path, ... } 映射成 path 字符串
+ * Map all leaves { path, ... } in assetMeta tree to path strings
  */
 export function mapMetaToPaths(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj
 
-  // 叶子：有 path 字段
+  // Leaf: has path field
   if ('path' in obj && typeof (obj as any).path === 'string') {
     return (obj as any).path
   }
@@ -157,11 +157,11 @@ export function mapMetaToPaths(obj: any): any {
 }
 
 /**
- * 根据文件路径生成 meta 信息（Node.js 环境，使用完整的 mime-types 库）
+ * Build meta information from file path (Node.js environment, using full mime-types library)
  */
 export function buildMeta(pathWithRoot: string): AssetMeta {
   const ext = path.extname(pathWithRoot).toLowerCase()
-  // 优先使用完整的 mime-types 库（支持更多类型）
+  // Prefer full mime-types library (supports more types)
   const mimeType = (mime.lookup(pathWithRoot) || getMimeType(ext)) as string
   const major = mimeType.split('/')[0]
 
@@ -181,7 +181,7 @@ export function buildMeta(pathWithRoot: string): AssetMeta {
 }
 
 /**
- * 解析 CLI 参数
+ * Parse CLI arguments
  */
 export function parseArgs(argv: string[]): { inputDir: string; outFile: string; watch: boolean } {
   const args = argv.slice(2)
