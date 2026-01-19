@@ -136,7 +136,7 @@ export function generateAssetsCode(metaTree: Record<string, any>): string {
         const urlExpression = `new URL("${relativePath}", import.meta.url).href`
         
         // Inline object definition
-        const objDef = `{\n${indentStr}  type: '${meta.type}' as const,\n${indentStr}  ext: '${meta.ext}',\n${indentStr}  mime: '${meta.mime}',\n${indentStr}  path: ${urlExpression},\n${indentStr}}`
+        const objDef = `{\n${indentStr}  type: '${meta.type}',\n${indentStr}  ext: '${meta.ext}',\n${indentStr}  mime: '${meta.mime}',\n${indentStr}  path: ${urlExpression},\n${indentStr}}`
         metaEntries.push(`${indentStr}${keyStr}: ${objDef}`)
         
         // Build assets by accessing assetMeta paths

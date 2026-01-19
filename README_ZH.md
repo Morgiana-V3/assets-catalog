@@ -104,13 +104,13 @@ src/assets/
 export const assetMeta = {
   images: {
     logo: {
-      type: 'image' as const,
+      type: 'image',
       ext: '.png',
       mime: 'image/png',
       path: new URL("../assets/images/logo.png", import.meta.url).href,
     },
     bg: {
-      type: 'image' as const,
+      type: 'image',
       ext: '.jpg',
       mime: 'image/jpeg',
       path: new URL("../assets/images/bg.jpg", import.meta.url).href,
@@ -118,7 +118,7 @@ export const assetMeta = {
   },
   audio: {
     bgm: {
-      type: 'audio' as const,
+      type: 'audio',
       ext: '.mp3',
       mime: 'audio/mpeg',
       path: new URL("../assets/audio/bgm.mp3", import.meta.url).href,
@@ -126,7 +126,7 @@ export const assetMeta = {
   },
   fonts: {
     custom: {
-      type: 'font' as const,
+      type: 'font',
       ext: '.woff2',
       mime: 'font/woff2',
       path: new URL("../assets/fonts/custom.woff2", import.meta.url).href,
