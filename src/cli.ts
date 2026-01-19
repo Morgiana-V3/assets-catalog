@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises'
 import fsSync from 'node:fs'
 import path from 'node:path'
-import { setDeep, toTsLiteral, mapMetaToPaths, buildMeta, parseArgs } from './utils.js'
+import { setDeep, parseArgs, generateAssetsCode } from './utils.js'
+import { buildMeta, convertToRelativePaths } from './node-utils.js'
 
 /**
  * Generate asset manifest file
@@ -17,8 +18,8 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
   const rootDir = path.resolve(projectRoot, inputDir)
   const outPath = path.resolve(projectRoot, outFile)
 
-  // Stores the assetMeta tree (leaves are meta objects)
-  const metaTree: Record<string, any> = {}
+  // Collect all file information (pure data collection)
+  const files: Array<{ segments: string[]; meta: any }> = []
 
   async function walk(dir: string) {
     const entries = await fs.readdir(dir, { withFileTypes: true })
@@ -42,7 +43,7 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
 
       const pathWithRoot = `${normalizedPrefix}/${relFromRoot}`
 
-      // Construct segments
+      // Build segments
       const pathParts = pathWithRoot.split('/')
       const fileWithExt = pathParts.pop()!
 
@@ -57,34 +58,28 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
         assetsIndex >= 0 ? segments.slice(assetsIndex + 1) : segments
 
       const meta = buildMeta(pathWithRoot)
-      setDeep(metaTree, usedSegments, meta)
+      files.push({ segments: usedSegments, meta })
     }
   }
 
   if (!silent) {
-    console.log('🔍 Scanning directory:', rootDir)
+    console.log('Scanning directory:', rootDir)
   }
   
   await walk(rootDir)
 
-  // Map metaTree to assets tree containing only paths
-  const assetsTree = mapMetaToPaths(metaTree)
+  // Build tree using pure function (don't modify any objects)
+  let metaTree: Record<string, any> = {}
+  for (const { segments, meta } of files) {
+    metaTree = setDeep(metaTree, segments, meta)
+  }
 
-  const header =
-    `// Generated asset manifest - Do not modify manually. Regenerate when assets change.\n` +
-    `// Generated at: ${new Date().toLocaleString('en-US')}\n\n`
+  // Convert all paths to relative paths (pure function, returns new object)
+  const metaTreeWithRelativePaths = convertToRelativePaths(metaTree, outPath)
 
-  const assetMetaCode =
-    'export const assetMeta = ' + toTsLiteral(metaTree, 0) + ' as const\n\n'
-
-  const assetsCode =
-    'export const assets = ' + toTsLiteral(assetsTree, 0) + ' as const\n\n'
-
-  const typesCode =
-    'export type AssetMeta = typeof assetMeta\n' +
-    'export type Assets = typeof assets\n'
-
-  const content = header + assetMetaCode + assetsCode + typesCode
+  const header = `// Generated at: ${new Date().toLocaleString('en-US')}\n\n`
+  const code = generateAssetsCode(metaTreeWithRelativePaths)
+  const content = header + code
 
   await fs.mkdir(path.dirname(outPath), { recursive: true })
   await fs.writeFile(outPath, content, 'utf8')
@@ -95,22 +90,22 @@ export async function generateAssetsTs(options?: { inputDir?: string; outFile?: 
 }
 
 /**
- * Watch mode: Monitor file changes and auto-regenerate
+ * Watch mode: watch file changes and auto-regenerate
  */
 export async function watchAndGenerate() {
   const { inputDir, outFile } = parseArgs(process.argv)
   const projectRoot = process.cwd()
   const rootDir = path.resolve(projectRoot, inputDir)
 
-  console.log('👀 Watch mode started')
-  console.log('📁 Watching directory:', rootDir)
-  console.log('📝 Output file:', path.resolve(projectRoot, outFile))
-  console.log('💡 Tip: Press Ctrl+C to stop watching\n')
+  console.log('Watch mode started')
+  console.log('Watching directory:', rootDir)
+  console.log('Output file:', path.resolve(projectRoot, outFile))
+  console.log('Tip: Press Ctrl+C to stop watching\n')
 
   // Initial generation
   await generateAssetsTs({ inputDir, outFile })
 
-  // Debounce: Avoid multiple triggers in a short time
+ 
   let timer: NodeJS.Timeout | null = null
   const debounceDelay = 300
 
@@ -131,8 +126,8 @@ export async function watchAndGenerate() {
     }, debounceDelay)
   }
 
-  // Watch directory using fs.watch
-  const watcher = fsSync.watch(rootDir, { recursive: true }, (eventType, filename) => {
+  // Use fs.watch to watch directory
+  const watcher = fsSync.watch(rootDir, { recursive: true }, (_eventType, filename) => {
     if (filename) {
       // Filter out temporary and hidden files
       if (filename.startsWith('.') || filename.includes('~')) {
@@ -142,16 +137,21 @@ export async function watchAndGenerate() {
     }
   })
 
-  // Graceful exit
+  
   process.on('SIGINT', () => {
-    console.log('\n\n Stopped watching')
+    console.log('\n\nStopping watch mode')
     watcher.close()
     process.exit(0)
   })
 }
 
 // CLI entry logic
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('cli.js')) {
+// Check if running as main module (supports direct run and npm link/npx)
+const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+                     process.argv[1]?.endsWith('cli.js') ||
+                     process.argv[1]?.includes('gen-assets')
+
+if (isMainModule) {
   const { watch } = parseArgs(process.argv)
   
   if (watch) {

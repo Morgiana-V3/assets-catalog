@@ -7,11 +7,23 @@
 
 [English Documentation](./README.md) | [GitHub 仓库](https://github.com/Morgiana-V3/assets-catalog)
 
-## 特性
+## 安装
 
-- **类型安全**：自动生成 TypeScript 类型定义，完整的编辑器智能提示
-- **多种方式**：支持 CLI 生成静态文件或 Vite 运行时动态加载
-- **资源元信息**：自动识别 MIME 类型、扩展名、资源类型
+```bash
+npm install assets-catalog
+yarn add assets-catalog
+pnpm add assets-catalog
+```
+
+---
+
+## 使用须知
+
+- **仅支持 ESM 项目**：代码依赖 `import.meta`，无法在 CommonJS 项目中使用
+- **避免同级文件同名**：重名文件会相互覆盖（如 `logo.png` 和 `logo.jpg`）
+- **资源会全部打包**：清单中的所有资源都会被打包进产物，请手动管理无用资源
+
+---
 
 ## 快速开始
 
@@ -27,90 +39,14 @@ import { assets } from './lib/assets'
 const logo = assets.images.logo  // 完整类型提示
 ```
 
-## 安装
-
-```bash
-npm install assets-catalog
-yarn add assets-catalog
-pnpm add assets-catalog
-```
-
 **依赖：**
-- [mime-types](https://www.npmjs.com/package/mime-types)： MIME 类型识别
-
+- [mime-types](https://www.npmjs.com/package/mime-types)：MIME 类型识别
 
 ---
 
 ## 数据结构
 
-> ⚠️ **重要**：为避免同名文件覆盖，同一目录下不要出现相同名称但不同扩展名的文件（如 `logo.png` 和 `logo.jpg`）
-
 工具会遍历指定目录下的所有文件，生成两个 JSON 数据：`assets`（路径）和 `assetMeta`（元信息）。
-
-**目录结构示例：**
-
-```
-src/assets/
-  ├── images/
-  │   ├── logo.png
-  │   └── bg.jpg
-  ├── audio/
-  │   └── bgm.mp3
-  └── fonts/
-      └── custom.woff2
-```
-
-**生成的数据结构：**
-
-```typescript
-// assetMeta - 完整的元信息
-const assetMeta = {
-  images: {
-    logo: {
-      type: 'image',
-      ext: '.png',
-      mime: 'image/png',
-      path: 'src/assets/images/logo.png'
-    },
-    bg: {
-      type: 'image',
-      ext: '.jpg',
-      mime: 'image/jpeg',
-      path: 'src/assets/images/bg.jpg'
-    }
-  },
-  audio: {
-    bgm: {
-      type: 'audio',
-      ext: '.mp3',
-      mime: 'audio/mpeg',
-      path: 'src/assets/audio/bgm.mp3'
-    }
-  },
-  fonts: {
-    custom: {
-      type: 'font',
-      ext: '.woff2',
-      mime: 'font/woff2',
-      path: 'src/assets/fonts/custom.woff2'
-    }
-  }
-}
-
-// assets - 简洁的路径树
-const assets = {
-  images: {
-    logo: 'src/assets/images/logo.png',
-    bg: 'src/assets/images/bg.jpg'
-  },
-  audio: {
-    bgm: 'src/assets/audio/bgm.mp3'
-  },
-  fonts: {
-    custom: 'src/assets/fonts/custom.woff2'
-  }
-}
-```
 
 ---
 
@@ -124,7 +60,8 @@ const assets = {
 
 **✅ 优点：**
 - 完整的 TypeScript 类型提示，编辑器智能提示友好
-- 适用于任何项目（Vue、React、Svelte 等）
+- 适用于主流打包工具（Vite、Webpack、Rollup、Parcel 2等）
+- 资源正确打包到生产环境
 
 **⚠️ 缺点：**
 - 需要生成额外的代码文件
@@ -144,26 +81,74 @@ npx gen-assets --watch
 npx gen-assets -w
 
 # 组合使用
-npx gen-assets --input public/images --out src/catalog.ts --watch
+npx gen-assets --input src/assets --out src/lib/assets.ts --watch
 ```
 
-**生成的文件：**
+**目录结构示例：**
+
+```
+src/assets/
+  ├── images/
+  │   ├── logo.png
+  │   └── bg.jpg
+  ├── audio/
+  │   └── bgm.mp3
+  └── fonts/
+      └── custom.woff2
+```
+
+**生成的数据结构：**
 
 ```typescript
-// src/lib/assets.ts
+// 资源元信息树
 export const assetMeta = {
-  logo: {
-    type: 'image',
-    ext: '.png',
-    mime: 'image/png',
-    path: 'src/assets/logo.png'
+  images: {
+    logo: {
+      type: 'image' as const,
+      ext: '.png',
+      mime: 'image/png',
+      path: new URL("../assets/images/logo.png", import.meta.url).href,
+    },
+    bg: {
+      type: 'image' as const,
+      ext: '.jpg',
+      mime: 'image/jpeg',
+      path: new URL("../assets/images/bg.jpg", import.meta.url).href,
+    }
+  },
+  audio: {
+    bgm: {
+      type: 'audio' as const,
+      ext: '.mp3',
+      mime: 'audio/mpeg',
+      path: new URL("../assets/audio/bgm.mp3", import.meta.url).href,
+    }
+  },
+  fonts: {
+    custom: {
+      type: 'font' as const,
+      ext: '.woff2',
+      mime: 'font/woff2',
+      path: new URL("../assets/fonts/custom.woff2", import.meta.url).href,
+    }
   }
 } as const
 
+// 资源路径树
 export const assets = {
-  logo: 'src/assets/logo.png'
+  images: {
+    logo: assetMeta.images.logo.path,
+    bg: assetMeta.images.bg.path
+  },
+  audio: {
+    bgm: assetMeta.audio.bgm.path
+  },
+  fonts: {
+    custom: assetMeta.fonts.custom.path
+  }
 } as const
 
+// 类型导出
 export type AssetMeta = typeof assetMeta
 export type Assets = typeof assets
 ```
@@ -174,10 +159,10 @@ export type Assets = typeof assets
 import { assets, assetMeta } from './lib/assets'
 
 // 使用资源路径（完整类型提示）
-const logoPath = assets.logo // 'src/assets/logo.png'
+const logoPath = assets.images.logo
 
 // 获取资源元信息
-const logoMeta = assetMeta.logo
+const logoMeta = assetMeta.images.logo
 console.log(logoMeta.type)  // 'image'
 console.log(logoMeta.mime)  // 'image/png'
 ```
@@ -193,26 +178,28 @@ console.log(logoMeta.mime)  // 'image/png'
 - 资源自动同步，无需重新生成
 
 **⚠️ 缺点：**
-- 仅支持 Vite 项目
+- 仅支持 Vite 打包工具
 - 类型提示较弱（`Record<string, any>`），编辑器无法精确提示
 
 **使用示例：**
 
+> assets 和 assetMeta 对象结构与上面例子相同
+
 ```typescript
 import { createAssets } from 'assets-catalog'
 
-// 使用 import.meta.glob 导入资源
+// 使用 import.meta.glob 导入资源（注意使用新的 Vite glob 语法）
 const globResult = import.meta.glob('/src/assets/**/*', { 
-  eager: true, 
-  as: 'url' 
+  query: '?url',
+  import: 'default'
 })
 
 // 创建资源对象
 const { assets, assetMeta } = createAssets(globResult, '/src/assets')
 
 // 使用资源
-console.log(assets.logo)      // URL 路径
-console.log(assetMeta.logo)   // { type, ext, mime, path }
+console.log(assets.images.logo)      // URL 路径
+console.log(assetMeta.images.logo)   // { type, ext, mime, path }
 ```
 
 **关于 `baseDir` 参数：**
@@ -239,13 +226,13 @@ createAssets(globResult, '/src/assets')
 
 ```typescript
 // 分别管理图片和字体
-const { assets: imageAssets, assetMeta: imageAssetMeta } = createAssets(
-  import.meta.glob('/src/assets/images/**/*', { eager: true, as: 'url' }),
+const { assets: imageAssets } = createAssets(
+  import.meta.glob('/src/assets/images/**/*', { query: '?url', import: 'default' }),
   '/src/assets/images'
 )
 
-const { assets: fontAssets, assetMeta: fontAssetMeta } = createAssets(
-  import.meta.glob('/src/assets/fonts/**/*', { eager: true, as: 'url' }),
+const { assets: fontAssets } = createAssets(
+  import.meta.glob('/src/assets/fonts/**/*', { query: '?url', import: 'default' }),
   '/src/assets/fonts'
 )
 
@@ -317,21 +304,6 @@ npx gen-assets --input src/assets --out src/lib/assets.ts --watch
   assets: Record<string, any>,      // 资源路径树
   assetMeta: Record<string, any>    // 资源元信息树
 }
-```
-
-**完整示例：**
-
-```typescript
-import { createAssets } from 'assets-catalog'
-
-const { assets, assetMeta } = createAssets(
-  import.meta.glob('/src/assets/**/*', { eager: true, as: 'url' }),
-  '/src/assets'  // 可选，推荐传入以简化路径
-)
-
-// 使用
-const logo = assets.images.logo
-const logoInfo = assetMeta.images.logo
 ```
 
 ---

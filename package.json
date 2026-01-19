@@ -1,6 +1,6 @@
 {
   "name": "assets-catalog",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "静态资源清单生成工具，支持 CLI 生成和 Vite 运行时两种方式",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +17,8 @@
   "files": [
     "dist",
     "bin",
-    "README.md"
+    "README.md",
+    "README_ZH.md"
   ],
   "scripts": {
     "build": "tsc",

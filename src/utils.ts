@@ -1,9 +1,7 @@
-import path from 'node:path'
-import mime from 'mime-types'
-import type { AssetMeta, AssetType, AssetTree } from './types.js'
+import type { AssetType } from './types.js'
 
 /**
- * Common MIME type mappings (for browser environment, avoiding full mime-db)
+ * Common MIME type mapping table (browser environment)
  */
 export const COMMON_MIME_TYPES: Record<string, string> = {
   // Images
@@ -44,14 +42,14 @@ export const COMMON_MIME_TYPES: Record<string, string> = {
 }
 
 /**
- * Get MIME type by extension (browser-friendly version)
+ * Get MIME type by extension (browser environment)
  */
 export function getMimeType(ext: string): string {
   return COMMON_MIME_TYPES[ext.toLowerCase()] || 'application/octet-stream'
 }
 
 /**
- * Guess asset type by extension
+ * Guess asset type by extension (browser environment)
  */
 export function guessAssetType(ext: string): AssetType {
   ext = ext.toLowerCase()
@@ -71,113 +69,112 @@ export function guessAssetType(ext: string): AssetType {
 }
 
 /**
- * Set deep property in nested object
+ * Set deep property in nested object (pure function, returns new object)
+ * @param obj - Source object
+ * @param segments - Path segments array
+ * @param value - Value to set
+ * @returns New object
  */
-export function setDeep(obj: any, segments: string[], value: any) {
-  let cur = obj
+export function setDeep(obj: Record<string, any>, segments: string[], value: any): Record<string, any> {
+  if (segments.length === 0) {
+    return obj
+  }
 
-  for (let i = 0; i < segments.length; i++) {
-    const key = segments[i]
-    const isLast = i === segments.length - 1
-
-    if (isLast) {
-      cur[key] = value
-    } else {
-      if (!cur[key] || typeof cur[key] !== 'object') {
-        cur[key] = {}
-      }
-      cur = cur[key]
+  const [first, ...rest] = segments
+  
+  if (rest.length === 0) {
+    // Last segment, set value
+    return {
+      ...obj,
+      [first]: value
     }
   }
-}
-
-/**
- * Convert JS value to TypeScript source code string
- */
-export function toTsLiteral(value: any, indent = 0): string {
-  const pad = (n: number) => '  '.repeat(n)
-
-  if (value === null) return 'null'
-  const t = typeof value
-
-  if (t === 'string') {
-    const escaped = value
-      .replace(/\\/g, '\\\\')
-      .replace(/'/g, "\\'")
-    return `'${escaped}'`
-  }
-
-  if (t === 'number' || t === 'boolean') {
-    return String(value)
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) return '[]'
-    const items = value
-      .map((v) => pad(indent + 1) + toTsLiteral(v, indent + 1))
-      .join(',\n')
-    return `[\n${items}\n${pad(indent)}]`
-  }
-
-  if (t === 'object') {
-    const entries = Object.entries(value)
-    if (entries.length === 0) return '{}'
-
-    const lines: string[] = []
-
-    for (const [k, v] of entries) {
-      const isValidId = /^[A-Za-z_$][\w$]*$/.test(k)
-      const keyCode = isValidId ? k : toTsLiteral(k, 0)
-      const valCode = toTsLiteral(v, indent + 1)
-      lines.push(`${pad(indent + 1)}${keyCode}: ${valCode}`)
-    }
-
-    return `{\n${lines.join(',\n')}\n${pad(indent)}}`
-  }
-
-  return toTsLiteral(String(value), indent)
-}
-
-/**
- * Map all leaves { path, ... } in assetMeta tree to path strings
- */
-export function mapMetaToPaths(obj: any): any {
-  if (!obj || typeof obj !== 'object') return obj
-
-  // Leaf: has path field
-  if ('path' in obj && typeof (obj as any).path === 'string') {
-    return (obj as any).path
-  }
-
-  const result: any = Array.isArray(obj) ? [] : {}
-  for (const [k, v] of Object.entries(obj)) {
-    result[k] = mapMetaToPaths(v)
-  }
-  return result
-}
-
-/**
- * Build meta information from file path (Node.js environment, using full mime-types library)
- */
-export function buildMeta(pathWithRoot: string): AssetMeta {
-  const ext = path.extname(pathWithRoot).toLowerCase()
-  // Prefer full mime-types library (supports more types)
-  const mimeType = (mime.lookup(pathWithRoot) || getMimeType(ext)) as string
-  const major = mimeType.split('/')[0]
-
-  let type: AssetType
-  if (major === 'image' || major === 'audio' || major === 'video' || major === 'font' || major === 'application' || major === 'text') {
-    type = major as AssetType
-  } else {
-    type = 'other'
-  }
-
+  
+  // Recursively handle nested paths
+  const nested = obj[first] && typeof obj[first] === 'object' ? obj[first] : {}
   return {
-    type,
-    ext,
-    mime: mimeType,
-    path: pathWithRoot
+    ...obj,
+    [first]: setDeep(nested, rest, value)
   }
+}
+
+
+
+/**
+ * Check if string is a valid JavaScript identifier
+ */
+function isValidIdentifier(str: string): boolean {
+  // JavaScript identifier rules:
+  // - Can only contain letters, numbers, underscore, $
+  // - Cannot start with a number
+  return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(str)
+}
+
+/**
+ * Generate asset manifest code
+ * @param metaTree - Asset metadata tree, where path should be relative paths
+ */
+export function generateAssetsCode(metaTree: Record<string, any>): string {
+  // Build assetMeta and assets tree directly (inline object definitions)
+  function rebuildTree(obj: any, path: string[] = [], indent: number = 1): { metaNode: string; assetNode: string } {
+    const metaEntries: string[] = []
+    const assetEntries: string[] = []
+    const indentStr = '  '.repeat(indent)
+    
+    for (const [key, value] of Object.entries(obj)) {
+      const currentPath = [...path, key]
+      
+      // Only add quotes for invalid identifiers
+      const keyStr = isValidIdentifier(key) ? key : `'${key}'`
+      
+      if (value && typeof value === 'object' && 'path' in value && 'type' in value) {
+        // Leaf node: inline object definition
+        const meta = value as any
+        const relativePath = meta.path // Already relative path
+        
+        // Use new URL() for better compatibility
+        const urlExpression = `new URL("${relativePath}", import.meta.url).href`
+        
+        // Inline object definition
+        const objDef = `{\n${indentStr}  type: '${meta.type}' as const,\n${indentStr}  ext: '${meta.ext}',\n${indentStr}  mime: '${meta.mime}',\n${indentStr}  path: ${urlExpression},\n${indentStr}}`
+        metaEntries.push(`${indentStr}${keyStr}: ${objDef}`)
+        
+        // Build assets by accessing assetMeta paths
+        const accessPath = currentPath
+          .map(k => isValidIdentifier(k) ? `.${k}` : `['${k}']`)
+          .join('')
+          .replace(/^\./, '') // Remove leading dot
+        assetEntries.push(`${indentStr}${keyStr}: assetMeta.${accessPath}.path`)
+      } else if (value && typeof value === 'object') {
+        // Intermediate node: recursively build subtree
+        const { metaNode, assetNode } = rebuildTree(value, currentPath, indent + 1)
+        metaEntries.push(`${indentStr}${keyStr}: ${metaNode}`)
+        assetEntries.push(`${indentStr}${keyStr}: ${assetNode}`)
+      }
+    }
+    
+    const closeIndent = '  '.repeat(indent - 1)
+    const metaNode = `{\n${metaEntries.join(',\n')}\n${closeIndent}}`
+    const assetNode = `{\n${assetEntries.join(',\n')}\n${closeIndent}}`
+    
+    return { metaNode, assetNode }
+  }
+
+  // Build tree structure
+  const { metaNode, assetNode } = rebuildTree(metaTree)
+
+  // Assemble final code
+  let code = '// Asset metadata tree\n'
+  code += `export const assetMeta = ${metaNode} as const\n\n`
+  
+  code += '// Asset path tree\n'
+  code += `export const assets = ${assetNode} as const\n\n`
+  
+  code += '// Type exports\n'
+  code += 'export type AssetMeta = typeof assetMeta\n'
+  code += 'export type Assets = typeof assets\n'
+
+  return code
 }
 
 /**
@@ -207,4 +204,5 @@ export function parseArgs(argv: string[]): { inputDir: string; outFile: string; 
 
   return { inputDir, outFile, watch }
 }
+
 

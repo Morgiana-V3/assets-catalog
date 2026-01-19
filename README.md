@@ -1,4 +1,5 @@
 # assets-catalog
+
 > Type-safe static asset manager · Auto-generate asset manifests · Support CLI and Vite runtime
 
 [![GitHub](https://img.shields.io/badge/GitHub-Morgiana--V3%2Fassets--catalog-blue?logo=github)](https://github.com/Morgiana-V3/assets-catalog)
@@ -6,11 +7,23 @@
 
 [中文文档](./README_ZH.md) | [GitHub Repository](https://github.com/Morgiana-V3/assets-catalog)
 
-## Features
+## Installation
 
-- **Type Safe**: Auto-generate TypeScript type definitions with full editor IntelliSense
-- **Multiple Approaches**: Support CLI static file generation or Vite runtime dynamic loading
-- **Asset Metadata**: Auto-detect MIME types, extensions, and asset types
+```bash
+npm install assets-catalog
+yarn add assets-catalog
+pnpm add assets-catalog
+```
+
+---
+
+## Important Notes
+
+- **ESM Projects Only**: The code depends on `import.meta` and cannot be used in CommonJS projects
+- **Avoid Same Filename**: Duplicate filenames will overwrite each other (e.g. `logo.png` and `logo.jpg`)
+- **All Assets Bundled**: All assets in the manifest will be bundled into the build output, please manage unused assets manually
+
+---
 
 ## Quick Start
 
@@ -26,14 +39,6 @@ import { assets } from './lib/assets'
 const logo = assets.images.logo  // Full type hints
 ```
 
-## Installation
-
-```bash
-npm install assets-catalog
-yarn add assets-catalog
-pnpm add assets-catalog
-```
-
 **Dependencies:**
 - [mime-types](https://www.npmjs.com/package/mime-types): MIME type detection
 
@@ -41,74 +46,7 @@ pnpm add assets-catalog
 
 ## Data Structure
 
-> ⚠️ **Important**: To avoid file overwrites, don't use the same filename with different extensions in the same directory (e.g. `logo.png` and `logo.jpg`)
-
 The tool traverses all files in the specified directory and generates two JSON structures: `assets` (paths) and `assetMeta` (metadata).
-
-**Directory structure example:**
-
-```
-src/assets/
-  ├── images/
-  │   ├── logo.png
-  │   └── bg.jpg
-  ├── audio/
-  │   └── bgm.mp3
-  └── fonts/
-      └── custom.woff2
-```
-
-**Generated data structure:**
-
-```typescript
-// assetMeta - Complete metadata
-const assetMeta = {
-  images: {
-    logo: {
-      type: 'image',
-      ext: '.png',
-      mime: 'image/png',
-      path: 'src/assets/images/logo.png'
-    },
-    bg: {
-      type: 'image',
-      ext: '.jpg',
-      mime: 'image/jpeg',
-      path: 'src/assets/images/bg.jpg'
-    }
-  },
-  audio: {
-    bgm: {
-      type: 'audio',
-      ext: '.mp3',
-      mime: 'audio/mpeg',
-      path: 'src/assets/audio/bgm.mp3'
-    }
-  },
-  fonts: {
-    custom: {
-      type: 'font',
-      ext: '.woff2',
-      mime: 'font/woff2',
-      path: 'src/assets/fonts/custom.woff2'
-    }
-  }
-}
-
-// assets - Concise path tree
-const assets = {
-  images: {
-    logo: 'src/assets/images/logo.png',
-    bg: 'src/assets/images/bg.jpg'
-  },
-  audio: {
-    bgm: 'src/assets/audio/bgm.mp3'
-  },
-  fonts: {
-    custom: 'src/assets/fonts/custom.woff2'
-  }
-}
-```
 
 ---
 
@@ -116,19 +54,20 @@ const assets = {
 
 Two approaches available, choose based on your project needs:
 
-### Approach 1: CLI (Recommended)
+### Approach 1: CLI Command Line (Recommended)
 
 Generate static asset manifest files using terminal commands.
 
-**✅ Advantages:**
-- Complete TypeScript type hints, editor-friendly IntelliSense
-- Works with any project (Vue, React, Svelte, etc.)
+**✅ Pros:**
+- Full TypeScript type hints with friendly editor IntelliSense
+- Works with major bundlers (Vite, Webpack, Rollup, Parcel 2, etc.)
+- Assets correctly bundled to production
 
-**⚠️ Disadvantages:**
-- Generates additional code files
-- Requires re-running command when assets change (can be solved with watch mode)
+**⚠️ Cons:**
+- Requires generating additional code files
+- Asset updates require re-running the command (use watch mode to solve this)
 
-**Basic usage:**
+**Basic Usage:**
 
 ```bash
 # Use default config (input: src/assets, output: src/lib/assets.ts)
@@ -142,40 +81,88 @@ npx gen-assets --watch
 npx gen-assets -w
 
 # Combined usage
-npx gen-assets --input public/images --out src/catalog.ts --watch
+npx gen-assets --input src/assets --out src/lib/assets.ts --watch
 ```
 
-**Generated file:**
+**Directory Structure Example:**
+
+```
+src/assets/
+  ├── images/
+  │   ├── logo.png
+  │   └── bg.jpg
+  ├── audio/
+  │   └── bgm.mp3
+  └── fonts/
+      └── custom.woff2
+```
+
+**Generated Data Structure:**
 
 ```typescript
-// src/lib/assets.ts
+// Asset metadata tree
 export const assetMeta = {
-  logo: {
-    type: 'image',
-    ext: '.png',
-    mime: 'image/png',
-    path: 'src/assets/logo.png'
+  images: {
+    logo: {
+      type: 'image' as const,
+      ext: '.png',
+      mime: 'image/png',
+      path: new URL("../assets/images/logo.png", import.meta.url).href,
+    },
+    bg: {
+      type: 'image' as const,
+      ext: '.jpg',
+      mime: 'image/jpeg',
+      path: new URL("../assets/images/bg.jpg", import.meta.url).href,
+    }
+  },
+  audio: {
+    bgm: {
+      type: 'audio' as const,
+      ext: '.mp3',
+      mime: 'audio/mpeg',
+      path: new URL("../assets/audio/bgm.mp3", import.meta.url).href,
+    }
+  },
+  fonts: {
+    custom: {
+      type: 'font' as const,
+      ext: '.woff2',
+      mime: 'font/woff2',
+      path: new URL("../assets/fonts/custom.woff2", import.meta.url).href,
+    }
   }
 } as const
 
+// Asset path tree
 export const assets = {
-  logo: 'src/assets/logo.png'
+  images: {
+    logo: assetMeta.images.logo.path,
+    bg: assetMeta.images.bg.path
+  },
+  audio: {
+    bgm: assetMeta.audio.bgm.path
+  },
+  fonts: {
+    custom: assetMeta.fonts.custom.path
+  }
 } as const
 
+// Type exports
 export type AssetMeta = typeof assetMeta
 export type Assets = typeof assets
 ```
 
-**Use in code:**
+**Usage in Code:**
 
 ```typescript
 import { assets, assetMeta } from './lib/assets'
 
-// Use asset path (full type hints)
-const logoPath = assets.logo // 'src/assets/logo.png'
+// Use asset paths (full type hints)
+const logoPath = assets.images.logo
 
 // Get asset metadata
-const logoMeta = assetMeta.logo
+const logoMeta = assetMeta.images.logo
 console.log(logoMeta.type)  // 'image'
 console.log(logoMeta.mime)  // 'image/png'
 ```
@@ -186,68 +173,70 @@ console.log(logoMeta.mime)  // 'image/png'
 
 Dynamically generate asset objects in Vite projects.
 
-**✅ Advantages:**
+**✅ Pros:**
 - No additional code files needed
-- Assets auto-sync, no regeneration needed
+- Assets auto-sync, no need to regenerate
 
-**⚠️ Disadvantages:**
-- Only works with Vite projects
-- Weaker type hints (`Record<string, any>`), less precise editor IntelliSense
+**⚠️ Cons:**
+- Vite bundler only
+- Weaker type hints (`Record<string, any>`), no precise editor IntelliSense
 
-**Usage example:**
+**Usage Example:**
+
+> assets and assetMeta object structure same as above example
 
 ```typescript
 import { createAssets } from 'assets-catalog'
 
-// Import assets using import.meta.glob
+// Use import.meta.glob to import assets (note: use new Vite glob syntax)
 const globResult = import.meta.glob('/src/assets/**/*', { 
-  eager: true, 
-  as: 'url' 
+  query: '?url',
+  import: 'default'
 })
 
-// Create asset object
+// Create asset objects
 const { assets, assetMeta } = createAssets(globResult, '/src/assets')
 
 // Use assets
-console.log(assets.logo)      // URL path
-console.log(assetMeta.logo)   // { type, ext, mime, path }
+console.log(assets.images.logo)      // URL path
+console.log(assetMeta.images.logo)   // { type, ext, mime, path }
 ```
 
-**About `baseDir` parameter:**
+**About `baseDir` Parameter:**
 
-`baseDir` is used to trim path prefixes for a cleaner object structure.
+`baseDir` is used to trim path prefixes, making the generated object structure more concise.
 
 ```typescript
 // File: /src/assets/images/logo.png
 
-// ❌ Without baseDir (or empty string)
+// ❌ Not passing baseDir (or empty string)
 createAssets(globResult, '')
-// Generates: assets.src.assets.images.logo  // verbose
+// Generates: assets.src.assets.images.logo  // Verbose
 
-// ✅ With '/src/assets' (recommended)
+// ✅ Pass '/src/assets' (recommended)
 createAssets(globResult, '/src/assets')
-// Generates: assets.images.logo  // concise
+// Generates: assets.images.logo  // Concise
 ```
 
 ---
 
-### Flexible Usage: Multiple Asset Catalogs
+### Flexible Usage: Multiple Asset Manifests
 
-You can generate multiple fine-grained asset catalogs as needed.
+You can generate multiple fine-grained asset manifests as needed.
 
 ```typescript
 // Manage images and fonts separately
-const { assets: imageAssets, assetMeta: imageAssetMeta } = createAssets(
-  import.meta.glob('/src/assets/images/**/*', { eager: true, as: 'url' }),
+const { assets: imageAssets } = createAssets(
+  import.meta.glob('/src/assets/images/**/*', { query: '?url', import: 'default' }),
   '/src/assets/images'
 )
 
-const { assets: fontAssets, assetMeta: fontAssetMeta } = createAssets(
-  import.meta.glob('/src/assets/fonts/**/*', { eager: true, as: 'url' }),
+const { assets: fontAssets } = createAssets(
+  import.meta.glob('/src/assets/fonts/**/*', { query: '?url', import: 'default' }),
   '/src/assets/fonts'
 )
 
-// Use
+// Usage
 const logo = imageAssets.logo
 const font = fontAssets.custom
 ```
@@ -263,7 +252,7 @@ npx gen-assets --input src/assets/fonts --out src/lib/fonts.ts
 
 ## API Documentation
 
-### CLI Command
+### CLI Commands
 
 #### `gen-assets [options]`
 
@@ -286,7 +275,7 @@ npx gen-assets
 # Custom paths
 npx gen-assets --input public/images --out src/catalog.ts
 
-# Watch mode (recommended for development)
+# Watch mode (recommended during development)
 npx gen-assets --watch
 
 # Full config
@@ -299,37 +288,22 @@ npx gen-assets --input src/assets --out src/lib/assets.ts --watch
 
 #### `createAssets(globResult, baseDir?)`
 
-Create asset object (Vite environment only).
+Create asset objects (Vite environment only).
 
 **Parameters:**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `globResult` | `Record<string, any>` | Yes | Result from `import.meta.glob` |
-| `baseDir` | `string` | No | Base directory for trimming path prefixes |
+| `globResult` | `Record<string, any>` | Yes | Return value of `import.meta.glob` |
+| `baseDir` | `string` | No | Base directory for trimming path prefix |
 
-**Return value:**
+**Return Value:**
 
 ```typescript
 {
   assets: Record<string, any>,      // Asset path tree
   assetMeta: Record<string, any>    // Asset metadata tree
 }
-```
-
-**Complete example:**
-
-```typescript
-import { createAssets } from 'assets-catalog'
-
-const { assets, assetMeta } = createAssets(
-  import.meta.glob('/src/assets/**/*', { eager: true, as: 'url' }),
-  '/src/assets'  // Optional, recommended for cleaner paths
-)
-
-// Use
-const logo = assets.images.logo
-const logoInfo = assetMeta.images.logo
 ```
 
 ---
@@ -349,11 +323,11 @@ interface AssetMeta {
 }
 
 type AssetType = 
-  | 'image'        // Image
+  | 'image'        // Images
   | 'audio'        // Audio
   | 'video'        // Video
-  | 'font'         // Font
-  | 'application'  // Application
+  | 'font'         // Fonts
+  | 'application'  // Applications
   | 'text'         // Text
   | 'other'        // Other
 ```
@@ -362,10 +336,10 @@ type AssetType =
 
 | Type | Extensions |
 |------|------------|
-| **Image** | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.ico`, `.bmp` |
+| **Images** | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.ico`, `.bmp` |
 | **Audio** | `.mp3`, `.wav`, `.ogg`, `.m4a`, `.flac` |
 | **Video** | `.mp4`, `.webm`, `.ogv`, `.mov`, `.avi` |
-| **Font** | `.woff`, `.woff2`, `.ttf`, `.otf`, `.eot` |
+| **Fonts** | `.woff`, `.woff2`, `.ttf`, `.otf`, `.eot` |
 | **Text** | `.json`, `.xml`, `.txt` |
 | **Other** | All other file types |
 
@@ -376,7 +350,7 @@ type AssetType =
 ### 1. Avoid Multiple Imports
 
 ```typescript
-// ❌ Before: Individual imports for each asset
+// ❌ Before: Each asset needs separate import
 import Logo from '@/assets/images/logo.png'
 import Bg from '@/assets/images/bg.jpg'
 import Bgm from '@/assets/audio/bgm.mp3'
@@ -391,7 +365,7 @@ function Gallery() {
   )
 }
 
-// ✅ Now: Centralized management, single import
+// ✅ Now: Unified management, single import
 import { assets } from './lib/assets'
 
 function Gallery() {
@@ -411,7 +385,7 @@ function Gallery() {
 
 Dynamically get assets based on current language.
 
-**Directory structure:**
+**Directory Structure:**
 
 ```
 src/assets/
@@ -427,7 +401,7 @@ src/assets/
           └── logo.png
 ```
 
-**Usage example:**
+**Usage Example:**
 
 ```typescript
 import { assets } from './lib/assets'
@@ -496,20 +470,20 @@ function groupByMimeType() {
   return groups
 }
 
-// Use
+// Usage
 const allImages = getAllImages()
 const jpegImages = groupByMimeType()['image/jpeg']
 console.log(`Found ${allImages.length} images`)
-console.log(`Including ${jpegImages.length} JPEG images`)
+console.log(`Including ${jpegImages.length} JPEG format`)
 ```
 
 ---
 
 ### 4. Asset Preloading Management
 
-Organize assets by level for smart preloading.
+Organize assets by game levels for smart preloading.
 
-**Directory structure:**
+**Directory Structure:**
 
 ```
 src/assets/
@@ -527,7 +501,7 @@ src/assets/
           └── icon.png
 ```
 
-**Preloading implementation:**
+**Preloading Implementation:**
 
 ```typescript
 import { assets, assetMeta } from './lib/assets'
@@ -554,7 +528,7 @@ async function enterLevel(level: Exclude<LevelKey, 'common'>) {
   await preloadLevelImages('common')
   await preloadLevelImages(level)
 
-  // Use assets to render scene
+  // Render scene using assets
   const bg = assets.game[level].bg
   const hero = assets.game[level].hero
 
@@ -567,10 +541,16 @@ enterLevel('level1')
 
 ---
 
+## Development
+
+1. Clone repository: `git clone https://github.com/Morgiana-V3/assets-catalog.git`
+2. Install dependencies: `npm install`
+3. Build: `npm run build`
+4. Link globally: `npm link`
+5. Link in test project: `npm link assets-catalog`
+
+---
+
 ## License
 
 MIT
-
-## Author
-
-Created with ❤️ for better asset management
